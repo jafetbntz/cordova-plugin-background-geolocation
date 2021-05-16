@@ -21,8 +21,8 @@ static NSString * const TAG = @"CDVBackgroundGeolocation";
     MAURConfig *config;
     MAURBackgroundGeolocationFacade* facade;
 
-    API_AVAILABLE(ios(10.0))
-    __weak id<UNUserNotificationCenterDelegate> prevNotificationDelegate;
+//    API_AVAILABLE(ios(10.0))
+//    __weak id<UNUserNotificationCenterDelegate> prevNotificationDelegate;
 }
 
 - (void)pluginInitialize
@@ -31,10 +31,10 @@ static NSString * const TAG = @"CDVBackgroundGeolocation";
     facade = [[MAURBackgroundGeolocationFacade alloc] init];
     facade.delegate = self;
 
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAppPause:) name:UIApplicationDidEnterBackgroundNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAppResume:) name:UIApplicationWillEnterForegroundNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onFinishLaunching:) name:UIApplicationDidFinishLaunchingNotification object:nil];
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAppTerminate:) name:UIApplicationWillTerminateNotification object:nil];
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAppPause:) name:UIApplicationDidEnterBackgroundNotification object:nil];
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAppResume:) name:UIApplicationWillEnterForegroundNotification object:nil];
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onFinishLaunching:) name:UIApplicationDidFinishLaunchingNotification object:nil];
+//    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(onAppTerminate:) name:UIApplicationWillTerminateNotification object:nil];
 }
 
 /**
@@ -444,61 +444,5 @@ static NSString * const TAG = @"CDVBackgroundGeolocation";
     [self sendEvent:@"http_authorization"];
 }
 
-/**@
- * on UIApplicationDidFinishLaunchingNotification
- */
--(void) onFinishLaunching:(NSNotification *)notification
-{
-    if (@available(iOS 10, *)) {
-        UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-        center.delegate = self;
-    }
-    
-    NSDictionary *dict = [notification userInfo];
-
-    MAURConfig *config = [facade getConfig];
-    if (config.isDebugging)
-    {
-        if (@available(iOS 10, *))
-        {
-            UNUserNotificationCenter *center = [UNUserNotificationCenter currentNotificationCenter];
-            prevNotificationDelegate = center.delegate;
-            center.delegate = self;
-        }
-    }
-
-    if ([dict objectForKey:UIApplicationLaunchOptionsLocationKey]) {
-        NSLog(@"%@ %@", TAG, @"started by system on location event.");
-        MAURConfig *config = [facade getConfig];
-        if (![config stopOnTerminate]) {
-            [facade start:nil];
-            [facade switchMode:MAURBackgroundMode];
-        }
-    }
-}
-
-- (void)userNotificationCenter:(UNUserNotificationCenter *)center
-       willPresentNotification:(UNNotification *)notification
-         withCompletionHandler:(void (^)(UNNotificationPresentationOptions options))completionHandler
-{
-    if (prevNotificationDelegate && [prevNotificationDelegate respondsToSelector:@selector(userNotificationCenter:willPresentNotification:withCompletionHandler:)])
-    {
-        // Give other delegates (like FCM) the chance to process this notification
-
-        [prevNotificationDelegate userNotificationCenter:center willPresentNotification:notification withCompletionHandler:^(UNNotificationPresentationOptions options) {
-            completionHandler(UNNotificationPresentationOptionAlert);
-        }];
-    }
-    else
-    {
-        completionHandler(UNNotificationPresentationOptionAlert);
-    }
-}
-
--(void) onAppTerminate:(NSNotification *)notification
-{
-    NSLog(@"%@ %@", TAG, @"appTerminate");
-    [facade onAppTerminate];
-}
 
 @end
